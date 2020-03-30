@@ -1,0 +1,178 @@
+--@name
+--@author
+--@server
+
+
+local soundTab = {
+    "vo/eli_lab/mo_gowithalyx01.wav",
+    "vo/eli_lab/mo_gowithalyx02.wav",
+    "vo/eli_lab/mo_airlock02.wav",
+    "vo/eli_lab/mo_airlock03.wav",
+    "vo/eli_lab/mo_airlock06.wav",
+    "vo/eli_lab/mo_airlock07.wav",
+    "vo/eli_lab/mo_airlock08.wav",
+    "vo/eli_lab/mo_noblame.wav",
+    "vo/eli_lab/mo_hurryup01.wav",
+    "vo/eli_lab/mo_postdoc02.wav",
+    "vo/eli_lab/mo_realhonor02.wav",
+    "vo/eli_lab/mo_deliberately.wav",
+    "vo/eli_lab/mo_difference.wav",
+    "vo/eli_lab/mo_digup01.wav",
+    "vo/eli_lab/mo_extrahelp01.wav",
+    "vo/eli_lab/mo_gotoeli02.wav",
+    "vo/eli_lab/mo_hereseli01.wav",
+    "vo/eli_lab/mo_hereseli02.wav",
+    "vo/citadel/mo_alyxneedthis.wav",
+    "vo/citadel/mo_dont.wav",
+    "vo/citadel/mo_dontworry.wav",
+    "vo/citadel/mo_illtakehim.wav",
+    "vo/citadel/mo_necessary.wav",
+    "vo/citadel/mo_notimealyx.wav",
+    "vo/citadel/mo_notleavingeli.wav",
+    "vo/citadel/mo_nouse.wav",
+    "vo/citadel/mo_outoftime.wav",
+    "vo/citadel/mo_sorrygordon.wav",
+    "vo/citadel/mo_stoppingyou.wav",
+    "vo/citadel/mo_wallace.wav"
+}
+
+local followMode = { Wander = 0, FollowOwner = 1, FollowTarget = 2}
+
+local follow = followMode.Wander
+
+local targetPos
+
+--It's actually skips, not ticks xdd
+local soundTick = 0
+local maxSoundTick = 40
+
+local angleTick = 0
+local maxAngleTick = 2
+
+local tick = 0
+local maxTick = 10
+
+local model = "models/hunter/plates/plate025x025.mdl"
+local holoModel = "models/player/mossman.mdl"
+local holo
+local force = 250
+
+local ent
+local physOb
+
+if (prop.canSpawn()) then
+    ent = prop.create(chip():getPos() + Vector(0,0,10), Angle(), model, false)
+    ent:setPhysMaterial("flesh")
+	ent:setNoDraw(true)
+	
+    physOb = ent:getPhysicsObject()
+    physOb:setMass(1)
+    
+    holo = holograms.create(ent:getPos(), Angle(), holoModel, Vector(0.5, 0.5, 0.5))
+    holo:setParent(ent)
+
+    chip():setPos(ent:getPos())
+    chip():setParent(ent)
+    chip():setNoDraw(true)
+else
+	return
+end
+
+timer.create("mo",0.1,0,function()
+    
+    if (not physOb or not physOb:isValid()) then
+        return
+    end
+    
+    if (tick==0) then
+    
+        physOb:setVelocity(physOb:getVelocity() + Vector(0,0,200))
+        holo:setAnimation("jump_slam", 0, 1)
+        
+        if (follow == 0) then
+            targetPos = ent:getPos() + Vector(math.random(-500,500), math.random(-500,500), 0)
+        end
+        
+        if (follow == 1) then
+            targetPos = owner():getPos()
+        end
+        
+        --if (follow == 2 and targetPos) then
+        --end
+        
+        if (targetPos) then
+            physOb:setVelocity(ent:getVelocity() + targetPos - ent:getPos())
+            holo:setAngles((targetPos - holo:getPos()):getAngle())
+        end
+        
+    end
+    
+    
+    if (angleTick == 0) then
+        --Shitty flip code
+        local x = ent:getAngles()[1]
+        local y = ent:getAngles()[2]
+        local z = ent:getAngles()[3]
+    
+        if(x > 45 or x < -45) then
+            x = -x
+        end
+        
+        if(z > 45 or z < -45) then
+            z = -z
+        end
+        --ent:setAngleVelocity(angleLook)
+        --x = math.clamp(x, -45, 45)
+        --z = math.clamp(z, -45, 45)
+        --local x = ent:getAngles()[1]
+        --local y = ent:getAngles()[2]
+        --local z = ent:getAngles()[3]
+        --ent:setAngles(Angle(x, y, z))
+        ent:setAngleVelocity(Vector(x, y, z))
+    end
+    
+	--could just have these in the reset tick (skip)
+    if (soundTick == 0) then
+        local snd = table.random(soundTab)
+        holo:emitSound(snd)
+    end
+    
+    tick = tick + 1
+    soundTick = soundTick + 1
+    angleTick = angleTick + 1
+	
+    if (tick >= maxTick) then
+        tick = 0
+        
+        --Update closest player
+        if(follow==2)then
+            local closestDist
+            local closestPly
+            
+            for k,v in pairs(find.allPlayers()) do
+                
+                local curDist = physOb:getPos():getDistance(v:getPos())
+    
+                if not closestDist then
+                    closestDist = curDist
+                end
+                
+                if curDist <= closestDist then
+                    closestDist = curDist
+                    closestPly = v
+                end
+            end
+            
+            targetPos = closestPly:getPos()
+        end    
+    end
+    if (soundTick >= maxSoundTick) then
+        soundTick = 0
+    end
+	if (angleTick >= maxAngleTick) then
+        angleTick = 0
+    end
+end)
+
+
+--ent:emitSound(

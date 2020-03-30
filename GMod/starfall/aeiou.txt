@@ -1,0 +1,111 @@
+--@name
+--@author
+--@server
+
+local sndTable = {
+    "vo/breencast/br_tofreeman01.wav",
+    "vo/breencast/br_tofreeman02.wav",
+    "vo/breencast/br_tofreeman03.wav",
+    "vo/breencast/br_tofreeman04.wav",
+    "vo/breencast/br_tofreeman05.wav",
+    "vo/breencast/br_tofreeman06.wav",
+    "vo/breencast/br_tofreeman07.wav",
+    "vo/breencast/br_tofreeman08.wav",
+    "vo/breencast/br_tofreeman09.wav",
+    "vo/breencast/br_tofreeman10.wav",
+    "vo/breencast/br_tofreeman11.wav",
+    "vo/breencast/br_tofreeman12.wav",
+    "vo/citadel/br_youneedme.wav"
+}
+
+--local gibModel = "models/Gibs/HGIBS.mdl"
+
+local modelPath = "models/dav0r/hoverball.mdl"
+local target
+local ent
+local randomForce = 50
+local skip = 0
+local maxSkip = 10
+local speed = 50
+local soundSkip = 0
+local maxSoundSkip = 60
+local physObj
+
+local function onCollision(colData, collider)
+
+    if(colData.Speed > 500) then
+        trace.decal("blood", colData.HitPos, colData.HitPos * 2)
+        
+        
+        --trace.decal("blood", colData.HitPos, colData.HitPos - Vector(-2,-2,10))
+        --trace.decal("blood", colData.HitPos, colData.HitPos - Vector(2,2,10))
+        --trace.decal("eye", chip():getPos(), chip():getPos() + Vector(0,0,-10))
+        chip():remove()
+    end
+end
+
+if (prop.canSpawn()) then
+    ent = prop.create(chip():getPos() + Vector(0,0,10), Angle(), modelPath, false)
+
+    ent:setMaterial("models/breen/breen_face")
+
+    ent:setPhysMaterial("flesh")
+    chip():setPos(ent:getPos())
+    chip():setParent(ent)
+    chip():setNoDraw(true)
+    ent:addCollisionListener(onCollision)
+    physObj = ent:getPhysicsObject()
+end
+
+timer.create("lol", 0.1, 0, function()
+    if (not ent or not ent:isValid() or not physObj:isValid()) then
+        return
+    end
+    
+    if (target and target:isValid() and target:isAlive()) then
+        local rndVec = Vector(
+            math.random(-randomForce, randomForce), 
+            math.random(-randomForce, randomForce), 
+            math.random(-randomForce, randomForce * 2)
+        )
+    
+        physObj:setVelocity(physObj:getVelocity() + rndVec + (target:getPos() - physObj:getPos()):getNormalized() * speed)
+    end
+
+    if (soundSkip == 0) then
+        local snd = table.random(sndTable)
+        local pitch = math.random(125,175)
+        ent:emitSound(snd, 100, pitch, 1)
+    end
+    
+    skip = skip + 1
+    soundSkip = soundSkip + 1
+    
+    if (soundSkip >= maxSoundSkip) then
+        soundSkip = 0
+    end
+    
+    if (skip >= maxSkip) then
+        skip = 0
+        
+        --let's re roll the target aswell
+        local closestDist
+        local closestPly
+        
+        for k,v in pairs(find.allPlayers()) do
+            
+            local curDist = physObj:getPos():getDistance(v:getPos())
+
+            if not closestDist then
+                closestDist = curDist
+            end
+            
+            if curDist <= closestDist then
+                closestDist = curDist
+                closestPly = v
+            end
+        end
+        
+        target = closestPly           
+    end
+end)
