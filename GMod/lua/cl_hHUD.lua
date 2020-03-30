@@ -35,16 +35,16 @@ local function hHUD()
 	surface.SetFont(fontName)
 
 	local health = LocalPlayer():Health()
-    local armor = LocalPlayer():Armor()
+	local armor = LocalPlayer():Armor()
 
-    local healthTextSizeX, healthTextSizeY = surface.GetTextSize(health)
+	local healthTextSizeX, healthTextSizeY = surface.GetTextSize(health)
 	local armorTextSizeX, armorTextSizeY = surface.GetTextSize(armor)
 	local screenPosX = 0
-    local screenPosY = ScrH()
+	local screenPosY = ScrH()
 
 	local armorTargetPosX = screenPosX + healthTextSizeX + padding * 2
 
-    if(curArmorPosX < armorTargetPosX) then
+	if(curArmorPosX < armorTargetPosX) then
 		curArmorPosX = curArmorPosX + armorTargetPosX * FrameTime()
 		
 		if(curArmorPosX + armorTargetPosX > 1) then
@@ -52,25 +52,25 @@ local function hHUD()
 		end
 	end
 	
-    if(curArmorPosX > armorTargetPosX) then
+	if(curArmorPosX > armorTargetPosX) then
 		curArmorPosX = curArmorPosX - armorTargetPosX * FrameTime()
 
 		if(curArmorPosX - armorTargetPosX < 1) then
 			curArmorPosX = armorTargetPosX
 		end
-    end
+	end
 
 	surface.SetTextColor(100, 255, 100, 255)
 	surface.SetDrawColor(20, 20, 20, 125)
 	surface.SetTextPos(screenPosX + padding / 2, screenPosY - healthTextSizeY)
 	surface.DrawRect(screenPosX + padding / 2, screenPosY - healthTextSizeY, healthTextSizeX + padding, healthTextSizeY)
-    surface.DrawText(health)
+	surface.DrawText(health)
 
-    surface.SetTextColor(100, 100, 255, 255)
+	surface.SetTextColor(100, 100, 255, 255)
 	surface.SetTextPos(curArmorPosX, screenPosY - armorTextSizeY)
 	surface.SetDrawColor(20, 20, 20, 125)
 	surface.DrawRect(curArmorPosX, screenPosY - armorTextSizeY, armorTextSizeX, armorTextSizeY)
-    surface.DrawText(armor)
+	surface.DrawText(armor)
 end
 
 
@@ -78,8 +78,8 @@ hook.Add("HUDPaint", hookName, hHUD)
 
 hook.Add("HUDShouldDraw", "Test_HideDefaultHud", function(name)
 
-    if hide[name] then
-        return false
-    end
+	if hide[name] then
+		return false
+	end
 
 end)
